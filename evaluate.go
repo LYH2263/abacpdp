@@ -16,8 +16,11 @@ func (p *PDP) Evaluate(bag AttrBag) (Decision, error) {
 }
 
 // EvaluateContext 支持取消；取消后尽快返回 ErrCanceled。
+// PDP 已关闭时直接返回 ErrClosed，绝不触碰 Close 拆掉的缓存。
 func (p *PDP) EvaluateContext(ctx context.Context, bag AttrBag) (Decision, error) {
-
+	if p.closed.Load() {
+		return Decision{}, ErrClosed
+	}
 	if err := ctx.Err(); err != nil {
 		return Decision{}, fmt.Errorf("%w: %v", ErrCanceled, err)
 	}
@@ -50,7 +53,15 @@ func (p *PDP) EvaluateContext(ctx context.Context, bag AttrBag) (Decision, error
 	}
 
 	p.mu.Lock()
-
+	// Close 可能在 evalSet 期间执行并已把 cache 拆成 nil；
+	// 再次确认状态，避免写已拆掉的缓存导致 nil map panic。
+	if p.closed.Load() {
+		p.mu.Unlock()
+		return Decision{}, ErrClosed
+	}
+	if p.cache == nil {
+		p.cache = make(map[string]Decision)
+	}
 	if len(p.cache) >= p.cacheSize {
 		p.cache = make(map[string]Decision)
 	}
