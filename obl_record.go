@@ -10,6 +10,6 @@ func (p *PDP) recordObligations(obls []Obligation) {
 	for i, o := range obls {
 		items[i] = obligation.Item{ID: o.ID, Attribute: o.Attribute, FulfillOn: string(o.FulfillOn)}
 	}
-	// 仍写入 pending；Close 若先丢弃 oblAudit 则永远无法 Flush
+	// 写入 pending，由 Close 统一 Flush 到审计日志。
 	p.oblAudit.Record(items)
 }
