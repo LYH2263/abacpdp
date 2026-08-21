@@ -20,8 +20,10 @@ func (p *PDP) EvaluateContext(ctx context.Context, bag AttrBag) (Decision, error
 	if p.closed.Load() {
 		return Decision{}, ErrClosed
 	}
-
-	_ = ctx
+	// 入口即查取消：网关可能在调用前就已 cancel，此时不应 enrich/跑策略。
+	if ctx.Err() != nil {
+		return Decision{}, ErrCanceled
+	}
 
 	// 克隆入参，避免调用方事后改写 Subject 等污染缓存键。
 	snap := bag.Clone()
@@ -76,8 +78,11 @@ func (p *PDP) EvaluateContext(ctx context.Context, bag AttrBag) (Decision, error
 func (p *PDP) evalSet(ctx context.Context, set *policy.Set, bag AttrBag) (Decision, error) {
 	results := make([]combine.Result, 0, len(set.Policies))
 	for _, pol := range set.Policies {
-
-		d, err := p.evalPolicy(context.Background(), &pol, bag)
+		// 每条策略前查取消：尽快跳出，避免把剩余策略全跑完才返回。
+		if ctx.Err() != nil {
+			return Decision{}, ErrCanceled
+		}
+		d, err := p.evalPolicy(ctx, &pol, bag)
 		if err != nil {
 			return Decision{}, err
 		}
@@ -96,8 +101,10 @@ func (p *PDP) evalPolicy(ctx context.Context, pol *policy.Policy, bag AttrBag) (
 	}
 	results := make([]combine.Result, 0, len(pol.Rules))
 	for i := range pol.Rules {
-
-		_ = ctx
+		// 每条规则前查取消：网关 cancel 后尽快停下，不再硬跑完。
+		if ctx.Err() != nil {
+			return Decision{}, ErrCanceled
+		}
 		d := evalRule(&pol.Rules[i], bag)
 		results = append(results, toCombine(d, pol.ID))
 	}
