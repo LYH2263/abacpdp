@@ -40,9 +40,26 @@ type Delayed struct {
 }
 
 func (d Delayed) Enrich(ctx context.Context, bag *Bag) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if d.Delay <= 0 {
+		d.apply(bag)
+		return nil
+	}
+	// 模拟远程 Wait：必须尊重 ctx，禁止 time.Sleep。
+	timer := time.NewTimer(d.Delay)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		d.apply(bag)
+		return nil
+	}
+}
 
-	_ = ctx
-	time.Sleep(d.Delay)
+func (d Delayed) apply(bag *Bag) {
 	if bag.Environment == nil {
 		bag.Environment = map[string]any{}
 	}
@@ -51,7 +68,6 @@ func (d Delayed) Enrich(ctx context.Context, bag *Bag) error {
 		key = "remote"
 	}
 	bag.Environment[key] = d.Value
-	return nil
 }
 
 type Cache struct {

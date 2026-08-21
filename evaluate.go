@@ -27,8 +27,7 @@ func (p *PDP) EvaluateContext(ctx context.Context, bag AttrBag) (Decision, error
 	// 克隆入参，避免调用方事后改写 Subject 等污染缓存键。
 	snap := bag.Clone()
 	if p.resolver != nil {
-
-		if err := p.resolver.Enrich(context.Background(), resolveBag(&snap)); err != nil {
+		if err := p.resolver.Enrich(ctx, resolveBag(&snap)); err != nil {
 			return Decision{}, err
 		}
 	}
