@@ -88,8 +88,7 @@ func (p *PDP) evalSet(ctx context.Context, set *policy.Set, bag AttrBag) (Decisi
 	}
 	merged, err := combine.Merge(set.Combine, results)
 	if err != nil {
-
-		return Decision{}, fmt.Errorf("unknown combine: %v", err)
+		return Decision{}, fmt.Errorf("%w: %v", ErrUnknownCombine, err)
 	}
 	return fromCombine(merged), nil
 }
@@ -112,8 +111,7 @@ func (p *PDP) evalPolicy(ctx context.Context, pol *policy.Policy, bag AttrBag) (
 	}
 	merged, err := combine.Merge(algo, results)
 	if err != nil {
-
-		return Decision{}, fmt.Errorf("unknown combine: %v", err)
+		return Decision{}, fmt.Errorf("%w: %v", ErrUnknownCombine, err)
 	}
 	out := fromCombine(merged)
 	out.PolicyID = pol.ID

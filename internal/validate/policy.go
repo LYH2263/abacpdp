@@ -21,6 +21,12 @@ func PolicySet(set *policy.Set) error {
 	if strings.TrimSpace(set.ID) == "" {
 		return fmt.Errorf("empty set id")
 	}
+	// set.Combine 是 Evaluate 合并策略集时实际使用的算法（见 evaluate.evalSet），
+	// 必须在此拒绝未知值，否则 Load 放行后错误会推迟到 Evaluate 才在 combine.Merge
+	// 的 default 分支暴露，且无法被 errors.Is(err, ErrUnknownCombine) 接住。
+	if set.Combine != "" && !knownCombine[strings.ToLower(strings.TrimSpace(set.Combine))] {
+		return fmt.Errorf("unknown combine %q", set.Combine)
+	}
 
 	if len(set.Policies) == 0 {
 		return fmt.Errorf("empty policies")
