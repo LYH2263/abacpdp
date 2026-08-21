@@ -38,7 +38,7 @@ func (p *PDP) EvaluateContext(ctx context.Context, bag AttrBag) (Decision, error
 		p.mu.RUnlock()
 		p.cacheHits.Add(1)
 
-		return d, nil
+		return d.Clone(), nil
 	}
 	set := p.set
 	p.mu.RUnlock()

@@ -1,6 +1,12 @@
 package obligation
 
 func CopyParams(in map[string]string) map[string]string {
-
-	return in
+	if in == nil {
+		return nil
+	}
+	out := make(map[string]string, len(in))
+	for k, v := range in {
+		out[k] = v
+	}
+	return out
 }

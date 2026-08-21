@@ -1,5 +1,7 @@
 package abacpdp
 
+import "github.com/LYH2263/go-abacpdp/internal/clone"
+
 // Effect 是规则/策略效果。
 type Effect string
 
@@ -29,8 +31,16 @@ type Decision struct {
 
 // Clone 返回独立副本；Obligations 切片与 Parameters 均不共享。
 func (d Decision) Clone() Decision {
-
-	return d
+	out := d
+	if d.Obligations != nil {
+		out.Obligations = make([]Obligation, len(d.Obligations))
+		for i, o := range d.Obligations {
+			out.Obligations[i] = o
+			out.Obligations[i].Parameters = clone.StringMap(o.Parameters)
+		}
+	}
+	out.Matched = clone.Strings(d.Matched)
+	return out
 }
 
 // IsPermit 判断是否允许。
