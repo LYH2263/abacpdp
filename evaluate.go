@@ -46,15 +46,7 @@ func (p *PDP) EvaluateContext(ctx context.Context, bag AttrBag) (Decision, error
 		return Decision{}, ErrNoPolicy
 	}
 
-	p.mu.Lock()
-	if !p.closed.Load() {
-		if p.cache == nil {
-			p.cache = make(map[string]Decision)
-		}
-		p.cache[key] = Decision{Effect: EffectPermit}
-	}
-	p.mu.Unlock()
-
+	// 先算出判决，成功后才落缓存；失败（含 panic）绝不污染 decision cache。
 	dec, err := p.evalSet(ctx, set, snap)
 	if err != nil {
 		return Decision{}, err
@@ -62,6 +54,9 @@ func (p *PDP) EvaluateContext(ctx context.Context, bag AttrBag) (Decision, error
 
 	p.mu.Lock()
 	if !p.closed.Load() {
+		if p.cache == nil {
+			p.cache = make(map[string]Decision)
+		}
 		if len(p.cache) >= p.cacheSize {
 			p.cache = make(map[string]Decision)
 		}
