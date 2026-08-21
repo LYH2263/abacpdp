@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ABAC PDP 管理页</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header>
+    <h1>ABAC 策略判决点</h1>
+    <p class="sub">pdpd · 试属性 / Permit·Deny / 义务</p>
+  </header>
+  <main>
+    <section>
+      <h2>状态</h2>
+      <pre id="stats">加载中…</pre>
+    </section>
+    <section>
+      <h2>当前策略</h2>
+      <pre id="policy">[]</pre>
+    </section>
+    <section>
+      <h2>试判</h2>
+      <label>Subject JSON <textarea id="subject">{"role":"admin","id":"alice"}</textarea></label>
+      <label>Resource JSON <textarea id="resource">{"class":"public","owner":"alice"}</textarea></label>
+      <label>Action JSON <textarea id="action">{"name":"read"}</textarea></label>
+      <label>Environment JSON <textarea id="env">{"ip":"10.0.0.1"}</textarea></label>
+      <button id="eval">Evaluate</button>
+      <pre id="result"></pre>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
