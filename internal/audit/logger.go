@@ -74,17 +74,18 @@ func (l *Logger) ensureLocked() error {
 }
 
 func (l *Logger) rotateLocked() error {
-
 	rotated := l.path + "." + time.Now().UTC().Format("20060102T150405")
+	// Windows 下当前句柄仍占用 audit.jsonl，直接 Rename 会因文件被占用而失败
+	// （归档写不出，后续 Write 也跟着失败）。改名前必须先 Close 旧句柄。
+	if l.f != nil {
+		_ = l.f.Sync()
+		_ = l.f.Close()
+		l.f = nil
+	}
 	if err := os.Rename(l.path, rotated); err != nil {
 		return err
 	}
-	if l.f != nil {
-		// 故意不 Close，仅 Sync
-		_ = l.f.Sync()
-	}
 	l.written = 0
-	l.f = nil
 	return l.ensureLocked()
 }
 
