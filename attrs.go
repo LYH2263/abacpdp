@@ -21,13 +21,14 @@ func NewAttrBag() AttrBag {
 }
 
 // Clone 深拷贝属性袋，避免调用方与缓存共享底层 map。
+// 复用同一张入参 Subject map 改写内容后再判的常见误用，也因深拷贝
+// 不再互相串扰。
 func (b AttrBag) Clone() AttrBag {
-
 	return AttrBag{
-		Subject:     b.Subject,
-		Resource:    b.Resource,
-		Action:      b.Action,
-		Environment: b.Environment,
+		Subject:     clone.MapAny(b.Subject),
+		Resource:    clone.MapAny(b.Resource),
+		Action:      clone.MapAny(b.Action),
+		Environment: clone.MapAny(b.Environment),
 	}
 }
 

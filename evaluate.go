@@ -24,7 +24,10 @@ func (p *PDP) EvaluateContext(ctx context.Context, bag AttrBag) (Decision, error
 		return Decision{}, fmt.Errorf("%w: %v", ErrCanceled, err)
 	}
 
-	snap := bag
+	// snap 取深拷贝副本：入参 bag 的底层 map 由调用方所有，resolver 的
+	// Enrich 不得就地写回污染入参；且缓存键基于内容，副本隔离后复用同一
+	// bag 多次判决也不会串扰。
+	snap := bag.Clone()
 	if p.resolver != nil {
 		if err := p.resolver.Enrich(ctx, resolveBag(&snap)); err != nil {
 			return Decision{}, err
